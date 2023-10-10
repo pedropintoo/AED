@@ -3,7 +3,6 @@
 //
 #include<stdlib.h>
 #include<stdio.h>
-#include<math.h>
 
 int power(int number, int e){
     int result = 1;
@@ -13,27 +12,24 @@ int power(int number, int e){
     return result;
 }
 
-void calcPowers(int** pow, int n_alg){
+void calcPowers(int* pow, int n_alg){
     for(int num = 0; num < 10; num++){
-        for(int p = 1; p <= n_alg; p++){
-            if(num == 0) pow[num][p-1] = 0;
-            else pow[num][p-1] = power(num,p);
-        }
+        pow[num] = power(num,n_alg);
     }
 }
 
-int armstrong(int n_digits, int** pow, int print){
+int armstrong(int n_digits, int* pow, int print){
     unsigned int n_max = power(10,n_digits);
     unsigned int num, alg, sum;
     unsigned int number_operations = 0;
 
-    for(int n = power(10, n_digits-1); n < n_max; n++){
+    for(int n = n_max/10; n < n_max; n++){
         num = n;
         sum = 0;
         while(num != 0){
             alg = num % 10;
 
-            sum += pow[alg][n_digits-1];
+            sum += pow[alg];
             number_operations++;
 
             num = num / 10;
@@ -49,20 +45,15 @@ int armstrong(int n_digits, int** pow, int print){
 }
 
 int main(void){
+    /// Reserve space
+    int* pow = malloc(10 * sizeof(int));
 
-#if 0
+#if 1
     /// TODO: Simples test for n digits
-    unsigned int i;
 
     int n_digits = 3;
 
-    /// Reserve space
-    int** pow = malloc(10 * sizeof(int*));
-    for(i = 0; i < 10; i++){
-        pow[i] = malloc(n_digits * sizeof(int));
-    }
-
-    /// Calculate the powers to array 2D
+    /// Calculate the powers to array
     calcPowers(pow, n_digits);
 
     /// Printing the armstrong numbers
@@ -71,7 +62,6 @@ int main(void){
 
 #else
     /// TODO: Testing the complexity
-    unsigned int i;
     unsigned int n;
     unsigned int result;
     unsigned int previous;
@@ -84,15 +74,10 @@ int main(void){
     printf("      n     armstrong(n)    a(2n)/a(n)\n");
     printf("-------  ---------------  ------------\n");
 
-    /// Reserve space (not included in complexity)
-    int** pow = malloc(10 * sizeof(int*));
-    for(i = 0; i < 10; i++){
-        pow[i] = malloc(end_n * sizeof(int));
-    }
-    /// Calculate the powers to array 2D (not included in complexity)
-    calcPowers(pow, end_n);
-
     for (n = start_n; n < end_n; n *= 2) {
+
+        /// Calculate the powers to array
+        calcPowers(pow, n);
 
         result = armstrong(n, pow, 0);
         printf("%7u  %15u", n, result);
@@ -112,9 +97,6 @@ int main(void){
 #endif
 
     /// Cleaning space
-    for(i = 0; i < 10; i++){
-        free(pow[i]);
-    }
     free(pow);
 
     return 0;
