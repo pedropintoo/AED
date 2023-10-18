@@ -8,7 +8,7 @@
 unsigned static number_comparisons;
 
 // Detection: array [i] = array [i – 1] + array [i + 1], para 0 < i < (n – 1)
-int detectionEquation(int* array, int n) {
+int detectionEquation(int* array, size_t n) {
     assert(n > 2);
     number_comparisons = 0;
 
