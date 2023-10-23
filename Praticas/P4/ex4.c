@@ -44,7 +44,7 @@ void detectionEqMulSubMul(int* array, size_t* n) {
 }
 
 int main(void){
-#if 1
+#if 0
     unsigned int i;
 
     // Starting array
