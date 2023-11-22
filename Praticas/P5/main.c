@@ -28,7 +28,7 @@ int f3(int n){
         return 2 * f3(n/2) + n;
     }else {
         N3+=2;
-        return f3(n/2) + f3((n+1)/2) + n;
+        x f3(n/2) + f3((n+1)/2) + n;
     }
 }
 
