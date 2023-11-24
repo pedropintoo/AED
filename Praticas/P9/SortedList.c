@@ -12,6 +12,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 struct _ListNode {
   void* item;
@@ -145,23 +146,33 @@ void ListMoveToTail(List* l) { ListMove(l, l->size - 1); }
 // (Try to optimize the search to start at the current node if possible.)
 int ListSearch(List* l, const void* p) {
   // COMPLETE ...
-  int pos = 0;
-  struct _ListNode* node;
-  int comparison = l->compare(p,(l->current));
-  if (comparison == 0) {
-    return 0;
-  } else if (comparison == -1) {
-    pos = l->currentPos;
-    node = l->current;
-  } else node = l->head;
+  int pos = l->currentPos;
+  int end = l->size;
+  struct _ListNode* node = l->current;
+  int comparison;
 
+  if (pos < 0) { // currentPos is outside
+    pos = 0;
+    node = l->head;
+  } else { // Try to begin in the current node
+    comparison = l->compare(p,(node->item));
+    if (comparison == 0) return 0;
+    else if (comparison > 0) {
+      pos = l->currentPos+1;
+      node = l->current->next;
+    } else {
+      node = l->head;
+      pos = 0;
+      end = l->currentPos;
+    }
+  }
 
-  for (int i = pos; i < l->size; i++) {
-    comparison = l->compare(node->item, p);
+  for (int i = pos; i < end; i++) {
+    comparison = l->compare(p, node->item);
     if(comparison == 0) {
       ListMove(l, i);
       return 0;
-    } else if (comparison > 1) return -1;
+    } else if (comparison < 0) break;
     node = node->next;
   }
 
@@ -281,7 +292,17 @@ void* ListRemoveCurrent(List* l) {
     // find node before current, change its next field,
     // free current, change current, change size
     // COMPLETE ...
+    struct _ListNode* sn = l->head; // Previouse of current
+    while(sn->next != l->current) sn = sn->next;
+    
+    sn->next = l->current->next;
+
+    free(l->current);
+    l->current = sn->next;
+    l->size--;
   }
+
+  ListTestInvariants(l);
   return item;
 }
 

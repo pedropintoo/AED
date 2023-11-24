@@ -33,14 +33,32 @@ static int cmpP(const void *a, const void *b) {
 PersonSet *PersonSetCreate() {
   // You must allocate space for the struct and create an empty persons list!
   // COMPLETE ...
+  PersonSet* ps = malloc(sizeof(PersonSet));
+  if (ps == NULL){
+    perror("PersonSetCreate Fail");
+    return NULL;
+  }
+  ps->persons = ListCreate(cmpP);
+  if (ps->persons == NULL){
+    free(ps);
+    // perror("PersonSetCreate Fail"); // (não é necessário) ListCreate deve gerir o erro!
+    return NULL;
+  }
 
-  return NULL;
+  ListTestInvariants(ps->persons);
+
+  return ps;
 }
 
 // Destroy PersonSet *pps
 void PersonSetDestroy(PersonSet **pps) {
   assert(*pps != NULL);
   // COMPLETE ...
+
+  ListDestroy(&((*pps)->persons));
+
+  free(*pps);
+  *pps = NULL;
 }
 
 int PersonSetSize(const PersonSet *ps) { return ListGetSize(ps->persons); }
@@ -70,6 +88,9 @@ static int search(const PersonSet *ps, int id) {
 // Do nothing if *ps already contains a person with the same id.
 void PersonSetAdd(PersonSet *ps, Person *p) {
   // COMPLETE ...
+  ListInsert(ps->persons, p);
+
+  ListTestInvariants(ps->persons);
 }
 
 // Pop one person out of *ps.
@@ -77,8 +98,10 @@ Person *PersonSetPop(PersonSet *ps) {
   assert(!PersonSetIsEmpty(ps));
   // It is easiest to pop and return the person in the first position!
   // COMPLETE ...
+  Person* psRet = ListRemoveHead(ps->persons);
 
-  return NULL;
+  ListTestInvariants(ps->persons);
+  return psRet;
 }
 
 // Remove the person with given id from *ps, and return it.
@@ -86,8 +109,15 @@ Person *PersonSetPop(PersonSet *ps) {
 Person *PersonSetRemove(PersonSet *ps, int id) {
   // You may call search here!
   // COMPLETE ...
+  Person* p = NULL;
+  int ret = search(ps,id); // Current node is updated!
 
-  return NULL;
+  if (ret >= 0) {
+    p = ListRemoveCurrent(ps->persons);
+  }
+  
+  ListTestInvariants(ps->persons);
+  return p;
 }
 
 // Get the person with given id of *ps.
@@ -95,8 +125,14 @@ Person *PersonSetRemove(PersonSet *ps, int id) {
 Person *PersonSetGet(const PersonSet *ps, int id) {
   // You may call search here!
   // COMPLETE ...
+  Person* p = NULL;
+  int ret = search(ps, id);  // Current node is updated
+  if (ret >= 0) {
+    p = ListGetCurrentItem(ps->persons);
+  }
 
-  return NULL;
+  ListTestInvariants(ps->persons);
+  return p;
 }
 
 // Return true (!= 0) if set contains person wiht given id, false otherwise.
@@ -111,6 +147,41 @@ PersonSet *PersonSetUnion(const PersonSet *ps1, const PersonSet *ps2) {
 
   // Merge the two sorted lists (similar to mergesort).
   // COMPLETE ...
+  ListMoveToHead(ps1->persons);
+  ListMoveToHead(ps2->persons);
+
+  while (ListCurrentIsInside(ps1->persons) && ListCurrentIsInside(ps2->persons)) {
+    Person *p1 = (Person *)ListGetCurrentItem(ps1->persons);
+    Person *p2 = (Person *)ListGetCurrentItem(ps2->persons);
+
+    if (p1->id < p2->id) {
+      ListInsert(ps->persons, p1);
+      ListMoveToNext(ps1->persons);
+    } else if (p1->id > p2->id) {
+      ListInsert(ps->persons, p2);
+      ListMoveToNext(ps2->persons);
+    } else {
+      ListInsert(ps->persons, p1);
+      ListMoveToNext(ps1->persons); 
+      ListMoveToNext(ps2->persons); // unique items
+    }
+  }
+  
+  while (ListCurrentIsInside(ps1->persons)) { // Finish the remainder
+    Person *p = (Person *)ListGetCurrentItem(ps1->persons);
+    ListInsert(ps->persons, p);
+    ListMoveToNext(ps1->persons);
+  }
+
+  while (ListCurrentIsInside(ps2->persons)) { // Finish the remainder
+    Person *p = (Person *)ListGetCurrentItem(ps2->persons);
+    ListInsert(ps->persons, p);
+    ListMoveToNext(ps2->persons);
+  }
+
+  ListTestInvariants(ps1->persons);
+  ListTestInvariants(ps2->persons);
+  ListTestInvariants(ps->persons);
 
   return ps;
 }
@@ -120,6 +191,28 @@ PersonSet *PersonSetUnion(const PersonSet *ps1, const PersonSet *ps2) {
 PersonSet *PersonSetIntersection(const PersonSet *ps1, const PersonSet *ps2) {
   PersonSet *ps = PersonSetCreate();
   // COMPLETE ...
+  int size1 = PersonSetSize(ps1);
+  int size2 = PersonSetSize(ps2);
+
+  PersonSet* smallest = ps1;
+  PersonSet* larggest = ps2; 
+  if (PersonSetSize(ps1) > PersonSetSize(ps2)) {
+    smallest = ps2;
+    larggest = ps1;
+  }
+
+  ListMoveToHead(smallest->persons);
+  
+  while (ListCurrentIsInside(smallest->persons)) {
+    Person *p = (Person *)ListGetCurrentItem(smallest->persons);
+
+    if (ListSearch(larggest->persons, p) == 0) ListInsert(ps->persons, p);
+    ListMoveToNext(smallest->persons);
+  }
+
+  ListTestInvariants(ps1->persons);
+  ListTestInvariants(ps2->persons);
+  ListTestInvariants(ps->persons);
 
   return ps;
 }
@@ -130,20 +223,39 @@ PersonSet *PersonSetDifference(const PersonSet *ps1, const PersonSet *ps2) {
   PersonSet *ps = PersonSetCreate();
   // COMPLETE ...
 
+  for (ListMoveToHead(ps1->persons); ListCurrentIsInside(ps1->persons); ListMoveToNext(ps1->persons)) {
+    Person *p = (Person *)ListGetCurrentItem(ps1->persons);
+
+    if (ListSearch(ps2->persons, p) == -1) ListInsert(ps->persons, p);
+  }
+
+  ListTestInvariants(ps1->persons);
+  ListTestInvariants(ps2->persons);
+  ListTestInvariants(ps->persons);
+
   return ps;
 }
 
 // Return true iff *ps1 is a subset of *ps2.
 int PersonSetIsSubset(const PersonSet *ps1, const PersonSet *ps2) {
   // COMPLETE ...
+  if (PersonSetSize(ps1) > PersonSetSize(ps2)) return 0;
 
-  return 0;
+  for (ListMoveToHead(ps1->persons); ListCurrentIsInside(ps1->persons); ListMoveToNext(ps1->persons)) {
+    Person *p = (Person *)ListGetCurrentItem(ps1->persons);
+
+    if (ListSearch(ps2->persons, p) == -1) return 0;
+  }
+
+  ListTestInvariants(ps1->persons);
+  ListTestInvariants(ps2->persons);
+
+  return 1;
 }
 
 // Return true if the two sets contain exactly the same elements.
 int PersonSetEquals(const PersonSet *ps1, const PersonSet *ps2) {
   // You may call PersonSetIsSubset here!
   // COMPLETE ...
-
-  return 0;
+  return PersonSetSize(ps1) == PersonSetSize(ps2) && PersonSetIsSubset(ps1,ps2);
 }

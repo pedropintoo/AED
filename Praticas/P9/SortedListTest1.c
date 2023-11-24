@@ -83,6 +83,7 @@ int main(void) {
     free(aux);
     printList(list);
     ListMoveToNext(list);  // skip one
+
   }
 
   // Cleanup (Try commenting out and run with valgrind)
