@@ -432,9 +432,10 @@ static void _BSTreeAddItems(const struct _BSTreeNode* p, Queue* q) {
 // 2) Depth-first pre-order,
 // 3) Depth-first in-order or
 // 4) Depth-first post-order?
-// A: ...
+// A: 3)
 // Q: Is this the required order here? Why?
-// A: ...
+// A: Yes, because we need to return a QUEUE with the ordered tree elements.
+//    The Depth-first in-order gives us the solution for that!
 
 // Returns a QUEUE with the ordered tree elements
 // or an EMPTY QUEUE, if the tree is empty.
